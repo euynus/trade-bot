@@ -2,17 +2,22 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and uv
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Copy requirements
-COPY requirements.txt .
+# Add uv to PATH
+ENV PATH="/root/.cargo/bin:$PATH"
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy project files
+COPY pyproject.toml .
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev || uv sync --no-dev
 
 # Copy application code
 COPY . .
@@ -21,4 +26,4 @@ COPY . .
 COPY --from=shared ../shared /app/shared
 
 # Default command (override in docker-compose)
-CMD ["celery", "-A", "src.celery_app", "worker", "--loglevel=info"]
+CMD ["uv", "run", "celery", "-A", "src.celery_app", "worker", "--loglevel=info"]

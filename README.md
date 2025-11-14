@@ -14,7 +14,7 @@ The system consists of three core modules:
 
 - **Frontend**: React 18, TypeScript, Vite, Ant Design, ECharts
 - **Backend**: Python 3.11+, FastAPI, Pydantic, uv (dependency management)
-- **Worker**: Celery, Redis, ccxt
+- **Worker**: Celery, Redis, ccxt, hyperliquid-python-sdk, uv (dependency management)
 - **Database**: ClickHouse (time-series data), Redis (caching)
 - **Deployment**: Docker, Docker Compose
 
@@ -73,15 +73,22 @@ uv sync
 uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-#### Worker Development
+#### Worker Development (with uv)
 
 ```bash
 cd worker
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-celery -A src.celery_app worker --loglevel=info
-celery -A src.celery_app beat --loglevel=info
+
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Run Celery worker
+uv run celery -A src.celery_app worker --loglevel=info
+
+# Run Celery beat (in another terminal)
+uv run celery -A src.celery_app beat --loglevel=info
 ```
 
 #### Frontend Development
@@ -101,10 +108,13 @@ npm run dev
 - Gate.io
 - Bitget
 
-### DEX (Decentralized Exchanges)
+### DEX (Decentralized Spot Exchanges)
 - Uniswap V3
 - PancakeSwap
 - SushiSwap
+
+### Perpetual DEX
+- **Hyperliquid** - Decentralized perpetual exchange with on-chain order book
 
 ## Monitored Trading Pairs
 
@@ -125,7 +135,7 @@ After starting the services, access:
 ```
 trade-bot/
 ├── backend/          # FastAPI backend service (uv managed)
-├── worker/           # Celery background tasks
+├── worker/           # Celery background tasks (uv managed)
 ├── frontend/         # React web application
 ├── shared/           # Shared code and types
 ├── database/         # Database configuration and migrations

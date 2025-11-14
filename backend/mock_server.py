@@ -25,7 +25,9 @@ app.add_middleware(
 )
 
 # Mock data generators
-EXCHANGES = ["binance", "okx", "bybit", "gateio", "bitget"]
+CEX_EXCHANGES = ["binance", "okx", "bybit", "gateio", "bitget"]
+PERP_DEX_EXCHANGES = ["hyperliquid"]
+ALL_EXCHANGES = CEX_EXCHANGES + PERP_DEX_EXCHANGES
 SYMBOLS = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "ARB/USDT"]
 
 def generate_price(base_price: float, variance: float = 0.02) -> float:
@@ -45,7 +47,8 @@ def generate_mock_prices():
     prices = []
     for symbol in SYMBOLS:
         base_price = base_prices[symbol]
-        for exchange in EXCHANGES:
+        # CEX exchanges
+        for exchange in CEX_EXCHANGES:
             price = generate_price(base_price, 0.01)
             prices.append({
                 "timestamp": datetime.utcnow().isoformat(),
@@ -58,6 +61,22 @@ def generate_mock_prices():
                 "bid": price * 0.9999,
                 "ask": price * 1.0001,
                 "volume_24h": random.uniform(1000, 100000)
+            })
+
+        # Perpetual DEX (Hyperliquid)
+        for exchange in PERP_DEX_EXCHANGES:
+            price = generate_price(base_price, 0.01)
+            prices.append({
+                "timestamp": datetime.utcnow().isoformat(),
+                "exchange": exchange,
+                "exchange_type": "PERP_DEX",
+                "symbol": symbol,
+                "base_currency": symbol.split("/")[0],
+                "quote_currency": symbol.split("/")[1],
+                "price": price,
+                "bid": None,
+                "ask": None,
+                "volume_24h": random.uniform(5000, 500000)  # Hyperliquid has high volume
             })
 
     return prices
@@ -75,23 +94,33 @@ def generate_mock_spreads():
 
     for symbol in SYMBOLS:
         base_price = base_prices[symbol]
-        for i in range(len(EXCHANGES)):
-            for j in range(i + 1, len(EXCHANGES)):
+        for i in range(len(ALL_EXCHANGES)):
+            for j in range(i + 1, len(ALL_EXCHANGES)):
                 price_a = generate_price(base_price, 0.01)
                 price_b = generate_price(base_price, 0.01)
                 spread_abs = abs(price_a - price_b)
                 spread_pct = (spread_abs / price_b) * 100
 
+                # Determine spread type
+                exchange_a = ALL_EXCHANGES[i]
+                exchange_b = ALL_EXCHANGES[j]
+                if exchange_a in CEX_EXCHANGES and exchange_b in CEX_EXCHANGES:
+                    spread_type = "CEX-CEX"
+                elif exchange_a in PERP_DEX_EXCHANGES or exchange_b in PERP_DEX_EXCHANGES:
+                    spread_type = "CEX-PERP"
+                else:
+                    spread_type = "CEX-DEX"
+
                 spreads.append({
                     "timestamp": datetime.utcnow().isoformat(),
                     "symbol": symbol,
-                    "exchange_a": EXCHANGES[i],
-                    "exchange_b": EXCHANGES[j],
+                    "exchange_a": exchange_a,
+                    "exchange_b": exchange_b,
                     "price_a": price_a,
                     "price_b": price_b,
                     "spread_abs": spread_abs,
                     "spread_pct": spread_pct,
-                    "spread_type": "CEX-CEX"
+                    "spread_type": spread_type
                 })
 
     return spreads
@@ -120,8 +149,8 @@ def generate_mock_arbitrage():
                 opportunities.append({
                     "timestamp": datetime.utcnow().isoformat(),
                     "symbol": symbol,
-                    "buy_exchange": random.choice(EXCHANGES),
-                    "sell_exchange": random.choice(EXCHANGES),
+                    "buy_exchange": random.choice(ALL_EXCHANGES),
+                    "sell_exchange": random.choice(ALL_EXCHANGES),
                     "buy_price": buy_price,
                     "sell_price": sell_price,
                     "spread_pct": spread_pct,
@@ -138,8 +167,9 @@ def generate_mock_funding_rates():
     """Generate mock funding rate data"""
     funding_rates = []
 
+    # CEX funding rates
     for symbol in SYMBOLS:
-        for exchange in EXCHANGES[:3]:  # Only some exchanges have funding rates
+        for exchange in CEX_EXCHANGES[:3]:  # Only some CEX have funding rates
             funding_rate = random.uniform(-0.0001, 0.0001)
             funding_rates.append({
                 "timestamp": datetime.utcnow().isoformat(),
@@ -148,6 +178,21 @@ def generate_mock_funding_rates():
                 "funding_rate": funding_rate,
                 "predicted_rate": funding_rate * random.uniform(0.8, 1.2),
                 "next_funding_time": (datetime.utcnow() + timedelta(hours=8)).isoformat(),
+                "mark_price": None,
+                "index_price": None
+            })
+
+    # Hyperliquid funding rates (typically has all perps)
+    for symbol in SYMBOLS:
+        for exchange in PERP_DEX_EXCHANGES:
+            funding_rate = random.uniform(-0.00015, 0.00015)
+            funding_rates.append({
+                "timestamp": datetime.utcnow().isoformat(),
+                "exchange": exchange,
+                "symbol": symbol,
+                "funding_rate": funding_rate,
+                "predicted_rate": funding_rate * random.uniform(0.9, 1.1),
+                "next_funding_time": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
                 "mark_price": None,
                 "index_price": None
             })
@@ -223,9 +268,14 @@ async def get_statistics(symbol: str, hours: int = 24):
 
 @app.get("/api/v1/exchanges")
 async def get_exchanges():
+    exchanges = []
+    for ex in CEX_EXCHANGES:
+        exchanges.append({"exchange": ex, "type": "CEX"})
+    for ex in PERP_DEX_EXCHANGES:
+        exchanges.append({"exchange": ex, "type": "PERP_DEX"})
     return {
-        "count": len(EXCHANGES),
-        "data": [{"exchange": ex, "type": "CEX"} for ex in EXCHANGES]
+        "count": len(exchanges),
+        "data": exchanges
     }
 
 @app.get("/api/v1/symbols")

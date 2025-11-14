@@ -1,5 +1,8 @@
 """
 Constants used across the application
+
+This module defines all constant values including supported exchanges,
+trading pairs, and default configuration values.
 """
 
 from enum import Enum
@@ -7,16 +10,19 @@ from typing import List
 
 # Exchange Types
 class ExchangeType(str, Enum):
-    CEX = "CEX"
-    DEX = "DEX"
+    CEX = "CEX"  # Centralized Exchange
+    DEX = "DEX"  # Decentralized Exchange (AMM-based)
+    PERP_DEX = "PERP_DEX"  # Decentralized Perpetual Exchange
 
 # Spread Types
 class SpreadType(str, Enum):
     CEX_CEX = "CEX-CEX"
     CEX_DEX = "CEX-DEX"
     DEX_DEX = "DEX-DEX"
+    CEX_PERP = "CEX-PERP"
+    PERP_PERP = "PERP-PERP"
 
-# Supported CEX Exchanges
+# Supported CEX Exchanges (Spot & Perpetual)
 CEX_EXCHANGES: List[str] = [
     "binance",
     "okx",
@@ -25,15 +31,20 @@ CEX_EXCHANGES: List[str] = [
     "bitget",
 ]
 
-# Supported DEX Exchanges
+# Supported DEX Exchanges (AMM-based Spot)
 DEX_EXCHANGES: List[str] = [
     "uniswap",
     "pancakeswap",
     "sushiswap",
 ]
 
+# Supported Perpetual DEX Exchanges
+PERP_DEX_EXCHANGES: List[str] = [
+    "hyperliquid",
+]
+
 # All supported exchanges
-ALL_EXCHANGES: List[str] = CEX_EXCHANGES + DEX_EXCHANGES
+ALL_EXCHANGES: List[str] = CEX_EXCHANGES + DEX_EXCHANGES + PERP_DEX_EXCHANGES
 
 # Trading pairs to monitor
 TRADING_PAIRS: List[str] = [
