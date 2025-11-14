@@ -13,17 +13,20 @@ RUN apt-get update && apt-get install -y \
 # Add uv to PATH
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# Copy project files
-COPY pyproject.toml .
+# Copy shared module first
+COPY shared/ /app/shared/
+
+# Copy worker project files
+COPY worker/pyproject.toml /app/worker/
+
+# Set working directory to worker
+WORKDIR /app/worker
 
 # Install dependencies using uv
 RUN uv sync --frozen --no-dev || uv sync --no-dev
 
-# Copy application code
-COPY . .
-
-# Copy shared module
-COPY --from=shared ../shared /app/shared
+# Copy worker application code
+COPY worker/ /app/worker/
 
 # Default command (override in docker-compose)
 CMD ["uv", "run", "celery", "-A", "src.celery_app", "worker", "--loglevel=info"]

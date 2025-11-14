@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:23.8
@@ -40,13 +38,15 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: trade-bot-backend
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+    working_dir: /app/backend
     environment:
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=9000
@@ -63,15 +63,17 @@ services:
         condition: service_healthy
     networks:
       - trade-bot-network
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
   worker:
     build:
-      context: ./worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: worker/Dockerfile
     container_name: trade-bot-worker
     volumes:
-      - ./worker:/app
+      - ./worker:/app/worker
+      - ./shared:/app/shared
+    working_dir: /app/worker
     environment:
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=9000
@@ -87,15 +89,17 @@ services:
         condition: service_healthy
     networks:
       - trade-bot-network
-    command: celery -A src.celery_app worker --loglevel=info --concurrency=4
+    command: uv run celery -A src.celery_app worker --loglevel=info --concurrency=4
 
   worker-beat:
     build:
-      context: ./worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: worker/Dockerfile
     container_name: trade-bot-worker-beat
     volumes:
-      - ./worker:/app
+      - ./worker:/app/worker
+      - ./shared:/app/shared
+    working_dir: /app/worker
     environment:
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=9000
@@ -111,19 +115,20 @@ services:
         condition: service_healthy
     networks:
       - trade-bot-network
-    command: celery -A src.celery_app beat --loglevel=info
+    command: uv run celery -A src.celery_app beat --loglevel=info
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       target: development
     container_name: trade-bot-frontend
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    working_dir: /app/frontend
     environment:
       - VITE_API_URL=http://localhost:8000
       - VITE_WS_URL=ws://localhost:8000

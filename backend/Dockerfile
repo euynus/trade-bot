@@ -12,17 +12,20 @@ RUN apt-get update && apt-get install -y \
 # Add uv to PATH
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# Copy project files
-COPY pyproject.toml .
+# Copy shared module first
+COPY shared/ /app/shared/
+
+# Copy backend project files
+COPY backend/pyproject.toml /app/backend/
+
+# Set working directory to backend
+WORKDIR /app/backend
 
 # Install dependencies using uv
 RUN uv sync --frozen --no-dev || uv sync --no-dev
 
-# Copy application code
-COPY . .
-
-# Copy shared module
-COPY --from=shared ../shared /app/shared
+# Copy backend application code
+COPY backend/ /app/backend/
 
 # Expose port
 EXPOSE 8000
