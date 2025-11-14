@@ -1,0 +1,7 @@
+celery==5.3.4
+redis==5.0.1
+clickhouse-connect==0.6.23
+ccxt==4.1.68
+web3==6.11.3
+pydantic==2.5.0
+python-dotenv==1.0.0
