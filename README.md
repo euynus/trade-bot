@@ -1,73 +1,79 @@
-# CEX/DEX 价差和资金费率监控系统
+# CEX/DEX Spread and Funding Rate Monitoring System
 
-一个实时监控中心化交易所(CEX)和去中心化交易所(DEX)之间价差以及资金费率的系统。
+A real-time monitoring system for tracking price spreads and funding rates between Centralized Exchanges (CEX) and Decentralized Exchanges (DEX).
 
-## 系统架构
+## System Architecture
 
-系统由三个核心模块组成：
+The system consists of three core modules:
 
-1. **Frontend Web** - React + TypeScript 前端应用
-2. **Backend API** - FastAPI 后端服务
-3. **Background Worker** - Celery 后台任务系统
+1. **Frontend Web** - React + TypeScript web application
+2. **Backend API** - FastAPI backend service with uv dependency management
+3. **Background Worker** - Celery background task system
 
-## 技术栈
+## Technology Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Ant Design, ECharts
-- **Backend**: Python 3.11+, FastAPI, Pydantic, SQLAlchemy
+- **Backend**: Python 3.11+, FastAPI, Pydantic, uv (dependency management)
 - **Worker**: Celery, Redis, ccxt
-- **Database**: ClickHouse (时序数据), Redis (缓存)
-- **部署**: Docker, Docker Compose
+- **Database**: ClickHouse (time-series data), Redis (caching)
+- **Deployment**: Docker, Docker Compose
 
-## 功能特性
+## Features
 
-- ✅ 实时监控多个CEX和DEX的价格
-- ✅ 自动计算价差（CEX-CEX, CEX-DEX, DEX-DEX）
-- ✅ 资金费率监控
-- ✅ 套利机会检测
-- ✅ 历史数据查询和可视化
-- ✅ WebSocket实时数据推送
-- ✅ 自定义报警配置
+- ✅ Real-time price monitoring across multiple CEX and DEX platforms
+- ✅ Automatic spread calculation (CEX-CEX, CEX-DEX, DEX-DEX)
+- ✅ Funding rate monitoring
+- ✅ Arbitrage opportunity detection
+- ✅ Historical data querying and visualization
+- ✅ WebSocket real-time data streaming
+- ✅ Customizable alert configuration
 
-## 快速开始
+## Quick Start
 
-### 前置要求
+### Prerequisites
 
 - Docker & Docker Compose
-- Python 3.11+ (本地开发)
-- Node.js 18+ (本地开发)
+- Python 3.11+ (for local development)
+- Node.js 18+ (for local development)
+- [uv](https://github.com/astral-sh/uv) (for backend development)
 
-### 使用Docker Compose启动
+### Start with Docker Compose
 
 ```bash
-# 克隆项目
+# Clone the project
 git clone <repository-url>
 cd trade-bot
 
-# 启动所有服务
+# Start all services
 docker-compose up -d
 
-# 查看日志
+# View logs
 docker-compose logs -f
 
-# 访问服务
+# Access services
 # Frontend: http://localhost:5173
 # Backend API: http://localhost:8000
-# API文档: http://localhost:8000/docs
+# API Docs: http://localhost:8000/docs
 ```
 
-### 本地开发
+### Local Development
 
-#### Backend开发
+#### Backend Development (with uv)
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Run the server
+uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-#### Worker开发
+#### Worker Development
 
 ```bash
 cd worker
@@ -78,7 +84,7 @@ celery -A src.celery_app worker --loglevel=info
 celery -A src.celery_app beat --loglevel=info
 ```
 
-#### Frontend开发
+#### Frontend Development
 
 ```bash
 cd frontend
@@ -86,21 +92,21 @@ npm install
 npm run dev
 ```
 
-## 监控的交易所
+## Monitored Exchanges
 
-### CEX (中心化交易所)
+### CEX (Centralized Exchanges)
 - Binance
 - OKX
 - Bybit
 - Gate.io
 - Bitget
 
-### DEX (去中心化交易所)
+### DEX (Decentralized Exchanges)
 - Uniswap V3
 - PancakeSwap
 - SushiSwap
 
-## 监控的交易对
+## Monitored Trading Pairs
 
 - BTC/USDT
 - ETH/USDT
@@ -108,28 +114,27 @@ npm run dev
 - SOL/USDT
 - ARB/USDT
 
-## API文档
+## API Documentation
 
-启动服务后访问：
+After starting the services, access:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## 项目结构
+## Project Structure
 
 ```
 trade-bot/
-├── backend/          # FastAPI后端服务
-├── worker/           # Celery后台任务
-├── frontend/         # React前端应用
-├── shared/           # 共享代码
-├── database/         # 数据库配置和迁移
-├── docker/           # Docker配置文件
-└── docs/             # 文档
+├── backend/          # FastAPI backend service (uv managed)
+├── worker/           # Celery background tasks
+├── frontend/         # React web application
+├── shared/           # Shared code and types
+├── database/         # Database configuration and migrations
+└── docker-compose.yml
 ```
 
-## 环境变量配置
+## Environment Configuration
 
-复制 `.env.example` 到 `.env` 并配置：
+Copy `.env.example` to `.env` and configure:
 
 ```env
 # ClickHouse

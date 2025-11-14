@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -25,6 +26,9 @@ wheels/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# uv
+.venv/
 
 # Node
 node_modules/

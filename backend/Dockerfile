@@ -2,16 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and uv
 RUN apt-get update && apt-get install -y \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Copy requirements
-COPY requirements.txt .
+# Add uv to PATH
+ENV PATH="/root/.cargo/bin:$PATH"
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy project files
+COPY pyproject.toml .
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev || uv sync --no-dev
 
 # Copy application code
 COPY . .
@@ -22,5 +27,5 @@ COPY --from=shared ../shared /app/shared
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application using uv
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

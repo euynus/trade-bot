@@ -1,0 +1,31 @@
+[project]
+name = "trade-bot-backend"
+version = "1.0.0"
+description = "CEX/DEX Spread Monitoring Backend API"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+    "pydantic==2.5.0",
+    "pydantic-settings==2.1.0",
+    "clickhouse-connect==0.6.23",
+    "redis==5.0.1",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-multipart==0.0.6",
+    "websockets==12.0",
+    "aioredis==2.0.1",
+    "httpx==0.25.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.25.0",
+]
